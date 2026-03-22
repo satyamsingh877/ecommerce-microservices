@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .cart-icon {
+            font-size: 1.2rem;
+        }
+        
+        .auth-buttons button {
+            margin-left: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #333;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .product-price {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .product-stock {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .add-to-cart {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .add-to-cart:hover {
+            background: #5a67d8;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .cart-items {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .cart-total {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .checkout-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .orders-list {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .order-card {
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">🛍️ ShopEase</div>
+            <div class="nav-links">
+                <a onclick="showProducts()">Products</a>
+                <a onclick="showCart()">Cart <span id="cart-count" class="cart-icon">(0)</span></a>
+                <a onclick="showOrders()">My Orders</a>
+                <div class="auth-buttons" id="auth-buttons">
+                    <button class="btn-secondary" onclick="showLogin()">Login</button>
+                    <button class="btn-primary" onclick="showRegister()">Register</button>
+                </div>
+                <div class="auth-buttons" id="user-info" style="display: none;">
+                    <span id="user-name"></span>
+                    <button class="btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="alert" class="alert"></div>
+        <div id="content"></div>
+    </div>
+    
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="login-email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password">
+            </div>
+            <button class="btn-primary" onclick="login()">Login</button>
+            <button class="btn-secondary" onclick="closeModal('login-modal')">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="register-name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="register-email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="register-password">
+            </div>
+            <button class="btn-primary" onclick="register()">Register</button>
+            <button class="btn-secondary" onclick="closeModal('register-modal')">Cancel</button>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentUser = null;
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
+        }
+        
+        function updateCartCount() {
+            document.getElementById('cart-count').textContent = `(${cart.length})`;
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+        
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}/products`);
+                const products = await response.json();
+                
+                let html = '<h1>Our Products</h1><div class="products-grid">';
+                products.forEach(product => {
+                    html += `
+                        <div class="product-card">
+                            <div class="product-image">📦</div>
+                            <div class="product-info">
+                                <div class="product-name">${product.name}</div>
+                                <div class="product-price">$${product.price}</div>
+                                <div class="product-stock">Stock: ${product.stock}</div>
+                                <button class="add-to-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                document.getElementById('content').innerHTML = html;
+            } catch (error) {
+                showAlert('Error loading products', 'error');
+            }
+        }
+        
+        function addToCart(id, name, price) {
+            if (!currentUser) {
+                showAlert('Please login to add items to cart', 'error');
+                showLogin();
+                return;
+            }
+            
+            cart.push({ id, name, price, quantity: 1 });
+            updateCartCount();
+            showAlert(`${name} added to cart!`, 'success');
+        }
+        
+        function showCart() {
+            if (!currentUser) {
+                showAlert('Please login to view cart', 'error');
+                showLogin();
+                return;
+            }
+            
+            if (cart.length === 0) {
+                document.getElementById('content').innerHTML = '<h1>Shopping Cart</h1><p>Your cart is empty</p>';
+                return;
+            }
+            
+            let total = 0;
+            let html = '<h1>Shopping Cart</h1><div class="cart-items">';
+            cart.forEach((item, index) => {
+                total += item.price;
+                html += `
+                    <div class="cart-item">
+                        <span>${item.name}</span>
+                        <span>$${item.price}</span>
+                        <button onclick="removeFromCart(${index})">Remove</button>
+                    </div>
+                `;
+            });
+            html += `
+                <div class="cart-total">Total: $${total}</div>
+                <button class="checkout-btn" onclick="checkout()">Checkout</button>
+            </div>`;
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            showCart();
+        }
+        
+        async function checkout() {
+            try {
+                const orderData = {
+                    userId: currentUser.id,
+                    items: cart.map(item => ({ productId: item.id, quantity: 1 })),
+                    total: cart.reduce((sum, item) => sum + item.price, 0)
+                };
+                
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (response.ok) {
+                    cart = [];
+                    updateCartCount();
+                    showAlert('Order placed successfully!', 'success');
+                    showOrders();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error placing order', 'error');
+            }
+        }
+        
+        async function showOrders() {
+            if (!currentUser) {
+                showAlert('Please login to view orders', 'error');
+                showLogin();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/orders/user/${currentUser.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                });
+                const orders = await response.json();
+                
+                if (orders.length === 0) {
+                    document.getElementById('content').innerHTML = '<h1>My Orders</h1><p>No orders yet</p>';
+                    return;
+                }
+                
+                let html = '<h1>My Orders</h1><div class="orders-list">';
+                orders.forEach(order => {
+                    html += `
+                        <div class="order-card">
+                            <div>Order #${order.id}</div>
+                            <div>Status: ${order.status}</div>
+                            <div>Total: $${order.total}</div>
+                            <div>Date: ${new Date(order.createdAt).toLocaleDateString()}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                document.getElementById('content').innerHTML = html;
+            } catch (error) {
+                showAlert('Error loading orders', 'error');
+            }
+        }
+        
+        function showProducts() {
+            loadProducts();
+        }
+        
+        function showLogin() {
+            document.getElementById('login-modal').style.display = 'block';
+        }
+        
+        function showRegister() {
+            document.getElementById('register-modal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    currentUser.token = data.token;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    
+                    document.getElementById('auth-buttons').style.display = 'none';
+                    document.getElementById('user-info').style.display = 'block';
+                    document.getElementById('user-name').textContent = `Welcome, ${currentUser.name}`;
+                    
+                    closeModal('login-modal');
+                    showAlert('Login successful!', 'success');
+                    loadProducts();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error logging in', 'error');
+            }
+        }
+        
+        async function register() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    currentUser.token = data.token;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    
+                    document.getElementById('auth-buttons').style.display = 'none';
+                    document.getElementById('user-info').style.display = 'block';
+                    document.getElementById('user-name').textContent = `Welcome, ${currentUser.name}`;
+                    
+                    closeModal('register-modal');
+                    showAlert('Registration successful!', 'success');
+                    loadProducts();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error registering', 'error');
+            }
+        }
+        
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('user');
+            cart = [];
+            updateCartCount();
+            
+            document.getElementById('auth-buttons').style.display = 'block';
+            document.getElementById('user-info').style.display = 'none';
+            
+            showAlert('Logged out successfully', 'success');
+            loadProducts();
+        }
+        
+        // Check if user is already logged in
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('auth-buttons').style.display = 'none';
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-name').textContent = `Welcome, ${currentUser.name}`;
+        }
+        
+        // Load initial products
+        loadProducts();
+    </script>
+</body>
+</html>
