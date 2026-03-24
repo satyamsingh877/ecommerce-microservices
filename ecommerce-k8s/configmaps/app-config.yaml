@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ecommerce
+data:
+  # Service URLs
+  PRODUCT_SERVICE_URL: "http://product-service:3001"
+  USER_SERVICE_URL: "http://user-service:3002"
+  ORDER_SERVICE_URL: "http://order-service:3003"
+  RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+  REDIS_URL: "redis://redis:6379"
+  # Database names
+  MONGODB_DATABASE: "productdb"
+  POSTGRES_DB: "userdb"
