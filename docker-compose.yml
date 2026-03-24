@@ -14,10 +14,11 @@ services:
     networks:
       - ecommerce-network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
+      start_period: 20s
 
   postgres:
     image: postgres:15
@@ -37,6 +38,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
   redis:
     image: redis:7-alpine
@@ -50,6 +52,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -63,10 +66,11 @@ services:
     networks:
       - ecommerce-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 30s
 
   product-service:
     build: ./product-service
@@ -75,15 +79,14 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/productdb?authSource=admin
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/productdb?authSource=admin&directConnection=true
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
       mongodb:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     networks:
       - ecommerce-network
+    restart: on-failure
 
   user-service:
     build: ./user-service
@@ -98,10 +101,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     networks:
       - ecommerce-network
+    restart: on-failure
 
   order-service:
     build: ./order-service
@@ -115,10 +117,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     networks:
       - ecommerce-network
+    restart: on-failure
 
   api-gateway:
     build: ./api-gateway
@@ -137,6 +138,7 @@ services:
       - order-service
     networks:
       - ecommerce-network
+    restart: on-failure
 
   frontend:
     build: ./frontend
