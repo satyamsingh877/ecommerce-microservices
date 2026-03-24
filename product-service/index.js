@@ -23,90 +23,59 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model('Product', productSchema);
 
-// Sample products data
+// Sample products
 const sampleProducts = [
-  {
-    name: "Laptop Pro X",
-    description: "High-performance laptop for professionals with 16GB RAM, 512GB SSD",
-    price: 1299.99,
-    stock: 10,
-    category: "Electronics"
-  },
-  {
-    name: "Wireless Mouse",
-    description: "Ergonomic wireless mouse with 2.4GHz connection",
-    price: 29.99,
-    stock: 50,
-    category: "Accessories"
-  },
-  {
-    name: "Mechanical Keyboard",
-    description: "RGB mechanical gaming keyboard with blue switches",
-    price: 89.99,
-    stock: 30,
-    category: "Accessories"
-  },
-  {
-    name: "4K Monitor",
-    description: "27-inch 4K UHD monitor with HDR support",
-    price: 399.99,
-    stock: 15,
-    category: "Electronics"
-  },
-  {
-    name: "Noise Cancelling Headphones",
-    description: "Wireless noise cancelling headphones with 30hr battery",
-    price: 199.99,
-    stock: 25,
-    category: "Audio"
-  }
+  { name: "Laptop Pro X", description: "High-performance laptop", price: 1299.99, stock: 10, category: "Electronics" },
+  { name: "Wireless Mouse", description: "Ergonomic wireless mouse", price: 29.99, stock: 50, category: "Accessories" },
+  { name: "Mechanical Keyboard", description: "RGB gaming keyboard", price: 89.99, stock: 30, category: "Accessories" },
+  { name: "4K Monitor", description: "27-inch 4K UHD monitor", price: 399.99, stock: 15, category: "Electronics" },
+  { name: "Noise Cancelling Headphones", description: "Wireless headphones", price: 199.99, stock: 25, category: "Audio" }
 ];
 
-// Connect to MongoDB with retry logic
-const connectWithRetry = async (retries = 5) => {
-  const mongoURI = process.env.MONGODB_URI || 'mongodb://admin:password@mongodb:27017/productdb?authSource=admin';
+// MongoDB connection function
+async function connectToMongoDB() {
+  const mongoURI = process.env.MONGODB_URI || 'mongodb://admin:password@mongodb:27017/productdb?authSource=admin&directConnection=true';
   
-  for (let i = 0; i < retries; i++) {
-    try {
-      await mongoose.connect(mongoURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-      console.log('Connected to MongoDB');
-      
-      // Initialize products if none exist
-      const count = await Product.countDocuments();
-      if (count === 0) {
-        console.log('No products found, inserting sample data...');
-        await Product.insertMany(sampleProducts);
-        console.log(`Inserted ${sampleProducts.length} sample products`);
-      } else {
-        console.log(`Found ${count} existing products`);
-      }
-      return;
-    } catch (error) {
-      console.error(`MongoDB connection attempt ${i + 1} failed:`, error.message);
-      if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, 5000));
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log('✅ Connected to MongoDB');
+    
+    // Check if products exist
+    const count = await Product.countDocuments();
+    if (count === 0) {
+      console.log('📦 No products found, inserting sample data...');
+      await Product.insertMany(sampleProducts);
+      console.log(`✅ Inserted ${sampleProducts.length} sample products`);
+    } else {
+      console.log(`📊 Found ${count} existing products`);
     }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error.message);
+    return false;
   }
-};
-
-// Start connection
-connectWithRetry().catch(console.error);
+}
 
 // Routes
-
-// Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'product-service', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'OK', 
+    service: 'product-service',
+    database: dbStatus,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Get all products
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    console.log(`Returning ${products.length} products`);
+    console.log(`📦 Returning ${products.length} products`);
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -114,7 +83,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Get product by ID
 app.get('/api/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -128,7 +96,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// Create product
 app.post('/api/products', async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -140,7 +107,6 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-// Update product stock
 app.patch('/api/products/:id/stock', async (req, res) => {
   try {
     const { stock } = req.body;
@@ -159,6 +125,24 @@ app.patch('/api/products/:id/stock', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Product Service running on port ${PORT}`);
-});
+// Start server
+async function startServer() {
+  const dbConnected = await connectToMongoDB();
+  
+  if (!dbConnected) {
+    console.error('Failed to connect to MongoDB. Exiting...');
+    process.exit(1);
+  }
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 Product Service running on port ${PORT}`);
+    console.log(`📋 API endpoints:`);
+    console.log(`   GET    /api/products - Get all products`);
+    console.log(`   GET    /api/products/:id - Get product by ID`);
+    console.log(`   POST   /api/products - Create product`);
+    console.log(`   PATCH  /api/products/:id/stock - Update stock`);
+    console.log(`   GET    /health - Health check`);
+  });
+}
+
+startServer().catch(console.error);
