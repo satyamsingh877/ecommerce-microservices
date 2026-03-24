@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: product-service
-        image: product-service:latest
-        imagePullPolicy: IfNotPresent
+        image: localhost:32000/product-service:latest  # Changed to use local registry
+        imagePullPolicy: Always
         ports:
         - containerPort: 3001
         env:
@@ -36,15 +36,3 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "400m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: product-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: product-service
-  ports:
-  - port: 3001
-    targetPort: 3001
