@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-db
+  namespace: ecommerce
+spec:
+  template:
+    spec:
+      containers:
+      - name: init-postgres
+        image: postgres:15
+        command:
+        - /bin/bash
+        - -c
+        - |
+          PGPASSWORD=password psql -h postgresql -U user -d userdb -c "
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            name VARCHAR(255),
+            role VARCHAR(50) DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          
+          INSERT INTO users (email, password, name) 
+          VALUES ('test@example.com', crypt('test123', gen_salt('bf')), 'Test User')
+          ON CONFLICT (email) DO NOTHING;
+          "
+      restartPolicy: Never
+  backoffLimit: 4
