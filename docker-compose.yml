@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MongoDB for Product Service
   mongodb:
     image: mongo:6
     container_name: mongodb
@@ -14,8 +13,12 @@ services:
       - mongodb_data:/data/db
     networks:
       - ecommerce-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # PostgreSQL for User Service
   postgres:
     image: postgres:15
     container_name: postgres
@@ -29,8 +32,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d userdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis for Order Service (caching)
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -38,8 +45,12 @@ services:
       - "6379:6379"
     networks:
       - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # RabbitMQ for Event Bus
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
@@ -51,8 +62,12 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - ecommerce-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-  # Product Service
   product-service:
     build: ./product-service
     container_name: product-service
@@ -63,12 +78,13 @@ services:
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/productdb?authSource=admin
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - mongodb
-      - rabbitmq
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - ecommerce-network
 
-  # User Service
   user-service:
     build: ./user-service
     container_name: user-service
@@ -77,15 +93,16 @@ services:
     environment:
       - PORT=3002
       - DATABASE_URL=postgresql://user:password@postgres:5432/userdb
-      - JWT_SECRET=your-secret-key-change-this
+      - JWT_SECRET=your-secret-key-change-this-in-production
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - ecommerce-network
 
-  # Order Service
   order-service:
     build: ./order-service
     container_name: order-service
@@ -96,12 +113,13 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - redis
-      - rabbitmq
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - ecommerce-network
 
-  # API Gateway
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
@@ -112,7 +130,7 @@ services:
       - PRODUCT_SERVICE_URL=http://product-service:3001
       - USER_SERVICE_URL=http://user-service:3002
       - ORDER_SERVICE_URL=http://order-service:3003
-      - JWT_SECRET=your-secret-key-change-this
+      - JWT_SECRET=your-secret-key-change-this-in-production
     depends_on:
       - product-service
       - user-service
@@ -120,7 +138,6 @@ services:
     networks:
       - ecommerce-network
 
-  # Frontend
   frontend:
     build: ./frontend
     container_name: frontend
